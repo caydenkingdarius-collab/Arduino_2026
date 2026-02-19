@@ -22,17 +22,72 @@
 
   https://docs.arduino.cc/built-in-examples/basics/Blink/
 */
+// Pin definitions
+const int speakerPin = 11;
+const int ledRed = 10;
+const int ledBlue = 9;
+const int fadeLed = 6;
 
-// the setup function runs once when you press reset or power the board
+// Siren variables
+int freq = 500;
+int direction = 1;  // 1 = up, -1 = down
+
+// Fade variables
+int brightness = 0;
+int fadeAmount = 5;
+
+// Timing
+unsigned long previousSirenMillis = 0;
+unsigned long previousFlashMillis = 0;
+unsigned long previousFadeMillis = 0;
+
+const int sirenInterval = 5;
+const int flashInterval = 150;
+const int fadeInterval = 20;
+
+bool redState = false;
+
 void setup() {
-  // initialize digital pin LED_BUILTIN as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(ledRed, OUTPUT);
+  pinMode(ledBlue, OUTPUT);
+  pinMode(fadeLed, OUTPUT);
 }
 
-// the loop function runs over and over again forever
 void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(5000);                      // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
-  delay(5000);                      // wait for a second
+
+  unsigned long currentMillis = millis();
+
+  // 🚨 Siren
+  if (currentMillis - previousSirenMillis >= sirenInterval) {
+    previousSirenMillis = currentMillis;
+
+    tone(speakerPin, freq);
+
+    freq += 10 * direction;
+
+    if (freq >= 1500) direction = -1;
+    if (freq <= 500) direction = 1;
+  }
+
+  // 🔴🔵 Flashing police lights
+  if (currentMillis - previousFlashMillis >= flashInterval) {
+    previousFlashMillis = currentMillis;
+
+    redState = !redState;
+    digitalWrite(ledRed, redState);
+    digitalWrite(ledBlue, !redState);
+  }
+
+  // ✨ Fade LED
+  if (currentMillis - previousFadeMillis >= fadeInterval) {
+    previousFadeMillis = currentMillis;
+
+    brightness += fadeAmount;
+
+    if (brightness <= 0 || brightness >= 255) {
+      fadeAmount = -fadeAmount;
+    }
+
+    analogWrite(fadeLed, brightness);
+  }
 }
